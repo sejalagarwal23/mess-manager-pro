@@ -42,6 +42,22 @@ export const MESS_CONFIG = {
   costPerDay: 120,
 };
 
+// Per-month cost per day (can be different for each month)
+export const MONTH_COST_PER_DAY: Record<number, number> = {
+  1: 120,
+  2: 120,
+  3: 125,
+  4: 125,
+  5: 130,
+  6: 130,
+  7: 120,
+  8: 120,
+  9: 125,
+  10: 125,
+  11: 130,
+  12: 130,
+};
+
 // Generate attendance for a student in a month
 export function generateMockAttendance(studentId: string, month: number, year: number): MonthlyAttendance {
   const daysInMonth = new Date(year, month, 0).getDate();

@@ -14,7 +14,7 @@ import {
   User, Users, CalendarDays, CreditCard, FileText, Bell, Plus, Search, Save, Send,
 } from "lucide-react";
 import {
-  generateMockAttendance, calculateBill, MESS_CONFIG, MONTH_NAMES, MOCK_NOTIFICATIONS, MOCK_LEAVES,
+  generateMockAttendance, calculateBill, MESS_CONFIG, MONTH_NAMES, MOCK_NOTIFICATIONS, MOCK_LEAVES, MONTH_COST_PER_DAY,
 } from "@/data/mockData";
 import { MOCK_USERS } from "@/contexts/AuthContext";
 
@@ -28,7 +28,7 @@ const AdminDashboard = () => {
   const [newUser, setNewUser] = useState({ name: "", rollNumber: "", password: "", phone: "", role: "student", hostelNumber: "", semester: "" });
 
   // Leave form
-  const [leaveForm, setLeaveForm] = useState({ studentId: "", fromDate: "", toDate: "" });
+  const [leaveForm, setLeaveForm] = useState({ studentSearch: "", studentId: "", fromDate: "", toDate: "" });
 
   // Notification
   const [notifMessage, setNotifMessage] = useState("");
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
   // Attendance
   const [attMonth, setAttMonth] = useState(new Date().getMonth() + 1);
   const [attDate, setAttDate] = useState(new Date().getDate());
-  const [costPerDay, setCostPerDay] = useState(MESS_CONFIG.costPerDay);
+  const [monthlyCosts, setMonthlyCosts] = useState<Record<number, number>>({ ...MONTH_COST_PER_DAY });
   const year = 2026;
 
   const students = MOCK_USERS.filter((u) => u.role === "student");
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
       return;
     }
     toast.success("Leave saved successfully!");
-    setLeaveForm({ studentId: "", fromDate: "", toDate: "" });
+    setLeaveForm({ studentSearch: "", studentId: "", fromDate: "", toDate: "" });
   };
 
   return (
@@ -231,17 +231,24 @@ const AdminDashboard = () => {
           {/* Bills */}
           <TabsContent value="bills" className="animate-fade-in">
             <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" /> Mess Bill Management</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Cost/Day: ₹</Label>
-                  <Input type="number" className="w-20" value={costPerDay} onChange={(e) => setCostPerDay(Number(e.target.value))} />
-                  <Button size="sm" onClick={() => toast.success(`Cost updated to ₹${costPerDay}`)}>
-                    <Save className="h-3.5 w-3.5 mr-1" /> Update
-                  </Button>
-                </div>
               </CardHeader>
               <CardContent>
+                {/* Per-month cost editing */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+                  {[1, 2, 3, 4, 5, 6].map((m) => (
+                    <div key={m} className="space-y-1">
+                      <Label className="text-xs">{MONTH_NAMES[m - 1].slice(0, 3)} ₹/day</Label>
+                      <Input
+                        type="number"
+                        className="w-full"
+                        value={monthlyCosts[m]}
+                        onChange={(e) => setMonthlyCosts({ ...monthlyCosts, [m]: Number(e.target.value) })}
+                      />
+                    </div>
+                  ))}
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -263,7 +270,7 @@ const AdminDashboard = () => {
                             <td className="px-3 py-2 text-muted-foreground">{s.rollNumber}</td>
                             {[1, 2, 3, 4, 5, 6].map((m) => {
                               const att = generateMockAttendance(s.id, m, year);
-                              const b = calculateBill(att, costPerDay);
+                              const b = calculateBill(att, monthlyCosts[m] || 120);
                               semTotal += b.totalAmount;
                               return <td key={m} className="text-center px-2 py-2">₹{b.totalAmount}</td>;
                             })}
@@ -325,9 +332,9 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Label>Cost Per Day: ₹</Label>
-                  <Input type="number" className="w-24" value={costPerDay} onChange={(e) => setCostPerDay(Number(e.target.value))} />
-                  <Button onClick={() => toast.success("Monthly bills generated for all students!")} className="gradient-primary text-primary-foreground">
+                  <Label>Cost/Day for {MONTH_NAMES[attMonth - 1]}: ₹</Label>
+                  <Input type="number" className="w-24" value={monthlyCosts[attMonth] || 120} onChange={(e) => setMonthlyCosts({ ...monthlyCosts, [attMonth]: Number(e.target.value) })} />
+                  <Button onClick={() => toast.success(`Monthly bills generated for ${MONTH_NAMES[attMonth - 1]}!`)} className="gradient-primary text-primary-foreground">
                     Generate Monthly Bill
                   </Button>
                 </div>
@@ -341,16 +348,35 @@ const AdminDashboard = () => {
               <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Assign Leave</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Student</Label>
-                    <Select value={leaveForm.studentId} onValueChange={(v) => setLeaveForm({ ...leaveForm, studentId: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
-                      <SelectContent>
-                        {students.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name} ({s.rollNumber})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-1.5 relative">
+                    <Label>Student (Roll Number)</Label>
+                    <Input
+                      placeholder="Type roll number..."
+                      value={leaveForm.studentSearch}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const matched = students.find((s) => s.rollNumber.toLowerCase() === val.toLowerCase());
+                        setLeaveForm({ ...leaveForm, studentSearch: val, studentId: matched ? matched.id : "" });
+                      }}
+                    />
+                    {leaveForm.studentSearch && !leaveForm.studentId && (
+                      <div className="absolute z-10 top-full left-0 w-full bg-background border rounded-md shadow-lg mt-1 max-h-40 overflow-y-auto">
+                        {students
+                          .filter((s) => s.rollNumber.toLowerCase().includes(leaveForm.studentSearch.toLowerCase()))
+                          .map((s) => (
+                            <div
+                              key={s.id}
+                              className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                              onClick={() => setLeaveForm({ ...leaveForm, studentSearch: s.rollNumber, studentId: s.id })}
+                            >
+                              {s.name} ({s.rollNumber})
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    {leaveForm.studentId && (
+                      <p className="text-xs text-success">✓ {students.find((s) => s.id === leaveForm.studentId)?.name}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label>From Date</Label>
