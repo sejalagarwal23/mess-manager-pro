@@ -58,12 +58,33 @@ export const MONTH_COST_PER_DAY: Record<number, number> = {
   12: 130,
 };
 
-// Generate attendance for a student in a month
+// Simple seeded pseudo-random number generator (deterministic)
+function seededRandom(seed: number): () => number {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+// Generate attendance for a student in a month (deterministic)
 export function generateMockAttendance(studentId: string, month: number, year: number): MonthlyAttendance {
   const daysInMonth = new Date(year, month, 0).getDate();
   const records: AttendanceRecord[] = [];
+  const seed = hashString(`${studentId}-${month}-${year}`);
+  const random = seededRandom(seed);
   for (let d = 1; d <= daysInMonth; d++) {
-    const rand = Math.random();
+    const rand = random();
     records.push({
       date: d,
       status: rand > 0.85 ? "absent" : rand > 0.75 ? "leave" : "present",
