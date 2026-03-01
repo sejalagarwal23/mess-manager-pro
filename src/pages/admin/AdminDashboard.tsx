@@ -16,7 +16,7 @@ import {
 import {
   generateMockAttendance, calculateBill, MESS_CONFIG, MONTH_NAMES, MOCK_NOTIFICATIONS, MOCK_LEAVES, MONTH_COST_PER_DAY,
 } from "@/data/mockData";
-import { MOCK_USERS } from "@/contexts/AuthContext";
+import { MOCK_USERS } from "@/data/mockUsers";
 
 const AdminDashboard = () => {
   const { user } = useAuth();

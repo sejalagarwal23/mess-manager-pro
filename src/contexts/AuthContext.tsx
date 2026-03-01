@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { MOCK_USERS } from "../data/mockUsers";
 
 export type UserRole = "student" | "admin";
 
@@ -15,66 +22,108 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (rollNumber: string, password: string, role: UserRole) => boolean;
+  login: (
+    rollNumber: string,
+    password: string,
+    role: UserRole
+  ) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id: "1",
-    name: "Rahul Sharma",
-    rollNumber: "21BCS001",
-    password: "password123",
-    role: "student",
-    phone: "9876543210",
-    email: "rahul@nitkkr.ac.in",
-    hostelNumber: "H-7",
-    semester: 6,
-  },
-  {
-    id: "2",
-    name: "Priya Singh",
-    rollNumber: "21BCS002",
-    password: "password123",
-    role: "student",
-    phone: "9876543211",
-    email: "priya@nitkkr.ac.in",
-    hostelNumber: "GH-1",
-    semester: 6,
-  },
-  {
-    id: "3",
-    name: "Admin User",
-    rollNumber: "admin",
-    password: "admin123",
-    role: "admin",
-    phone: "9876500000",
-    email: "admin@nitkkr.ac.in",
-  },
-];
+// 🔥 Toggle this when backend is ready
+const USE_MOCK = true;
+
+const API_BASE = "http://localhost:5000/api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (rollNumber: string, password: string, role: UserRole): boolean => {
-    const found = MOCK_USERS.find(
-      (u) => u.rollNumber === rollNumber && u.password === password && u.role === role
-    );
-    if (found) {
+  // ✅ Persist login on refresh
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token && USE_MOCK) {
+      const storedUser = localStorage.getItem("mockUser");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+
+    // Later when backend exists:
+    // if (token && !USE_MOCK) {
+    //   fetch profile using token
+    // }
+  }, []);
+
+  const login = async (
+    rollNumber: string,
+    password: string,
+    role: UserRole
+  ): Promise<boolean> => {
+    // =========================
+    // 🔹 MOCK MODE
+    // =========================
+    if (USE_MOCK) {
+      const found = MOCK_USERS.find(
+        (u) =>
+          u.rollNumber === rollNumber &&
+          u.password === password &&
+          u.role === role
+      );
+
+      if (!found) return false;
+
       const { password: _, ...userData } = found;
+
+      localStorage.setItem("token", "mock-token");
+      localStorage.setItem("mockUser", JSON.stringify(userData));
       setUser(userData);
+
       return true;
     }
-    return false;
+
+    // =========================
+    // 🔹 BACKEND MODE
+    // =========================
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rollNumber, password, role }),
+      });
+
+      if (!res.ok) return false;
+
+      const data = await res.json();
+
+      if (data.token && data.user) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("mockUser");
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, isAuthenticated: !!user }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -82,8 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context)
+    throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
-
-export { MOCK_USERS };
