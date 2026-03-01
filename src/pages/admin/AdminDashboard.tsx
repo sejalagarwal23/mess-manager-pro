@@ -1,3 +1,43 @@
+// TODO [MERN INTEGRATION]: Replace mock data imports with API calls:
+// import { usersApi, attendanceApi, leavesApi, notificationsApi, messConfigApi, billsApi } from "@/lib/api";
+// Use React Query or useEffect + useState to fetch data from Express backend.
+//
+// Example for notifications:
+//   const [notifications, setNotifications] = useState([]);
+//   useEffect(() => { notificationsApi.getAll().then(setNotifications); }, []);
+//   const handleSendNotification = async () => {
+//     await notificationsApi.send(notifMessage);
+//     toast.success("Notification sent to all students!");
+//     const updated = await notificationsApi.getAll();
+//     setNotifications(updated);
+//   };
+//
+// Example for attendance:
+//   const [summary, setSummary] = useState([]);
+//   useEffect(() => { attendanceApi.getSummary(attMonth, year).then(setSummary); }, [attMonth]);
+//
+// Example for bills:
+//   const [bills, setBills] = useState([]);
+//   useEffect(() => { billsApi.getAllBills(year).then(setBills); }, [monthlyCosts]);
+//
+// Example for leaves:
+//   const handleSaveLeave = async () => {
+//     await leavesApi.create({ studentId: leaveForm.studentId, fromDate: leaveForm.fromDate, toDate: leaveForm.toDate });
+//     toast.success("Leave saved!");
+//   };
+//
+// Example for users:
+//   const handleAddUser = async (e) => {
+//     e.preventDefault();
+//     await usersApi.create(newUser);
+//     toast.success("User created!");
+//   };
+//
+// Example for mess config:
+//   const handleCostChange = async (month, costPerDay) => {
+//     await messConfigApi.update(month, year, costPerDay);
+//   };
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
