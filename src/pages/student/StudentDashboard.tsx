@@ -1,3 +1,23 @@
+// TODO [MERN INTEGRATION]: Replace mock data with API calls:
+// import { attendanceApi, billsApi, notificationsApi, messConfigApi } from "@/lib/api";
+//
+// Example:
+//   const [attendance, setAttendance] = useState(null);
+//   const [bill, setBill] = useState(null);
+//   const [notifications, setNotifications] = useState([]);
+//
+//   useEffect(() => {
+//     attendanceApi.get(user.id, selectedMonth, year).then(setAttendance);
+//   }, [selectedMonth]);
+//
+//   useEffect(() => {
+//     billsApi.getStudentBill(user.id, billMonth, year).then(setBill);
+//   }, [billMonth]);
+//
+//   useEffect(() => {
+//     notificationsApi.getAll().then(setNotifications);
+//   }, []);
+
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";

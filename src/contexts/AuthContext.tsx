@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+// TODO [MERN INTEGRATION]: Replace mock login with Express backend API call
+// import { authApi, setToken, removeToken, getToken } from "@/lib/api";
 
 export type UserRole = "student" | "admin";
 
@@ -22,6 +24,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// TODO [MERN INTEGRATION]: Remove MOCK_USERS and use Express backend instead
+// These mock users will be replaced by actual MongoDB users
 const MOCK_USERS: (User & { password: string })[] = [
   {
     id: "1",
@@ -59,6 +63,27 @@ const MOCK_USERS: (User & { password: string })[] = [
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // TODO [MERN INTEGRATION]: Replace this mock login with real API call:
+  //
+  // const login = async (rollNumber: string, password: string, role: UserRole): Promise<boolean> => {
+  //   try {
+  //     const { token, user: userData } = await authApi.login(rollNumber, password, role);
+  //     setToken(token);
+  //     setUser(userData);
+  //     return true;
+  //   } catch (err) {
+  //     return false;
+  //   }
+  // };
+  //
+  // Also add useEffect to restore session on page reload:
+  // useEffect(() => {
+  //   const token = getToken();
+  //   if (token) {
+  //     authApi.getMe().then(setUser).catch(() => removeToken());
+  //   }
+  // }, []);
+
   const login = (rollNumber: string, password: string, role: UserRole): boolean => {
     const found = MOCK_USERS.find(
       (u) => u.rollNumber === rollNumber && u.password === password && u.role === role
@@ -71,6 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
+  // TODO [MERN INTEGRATION]: On logout, also remove token:
+  // const logout = () => { removeToken(); setUser(null); };
   const logout = () => setUser(null);
 
   return (
